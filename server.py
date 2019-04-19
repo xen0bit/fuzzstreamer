@@ -48,12 +48,6 @@ ResponseStatus = namedtuple("HTTPStatus",
 
 ResponseData = namedtuple("ResponseData",
                           ["status", "content_type", "data_stream"])
-
-# Mapping the output format used in the client to the content type for the
-# response
-AUDIO_FORMATS = {"ogg_vorbis": "audio/ogg",
-                 "mp3": "audio/mpeg",
-                 "pcm": "audio/wave; codecs=1"}
 CHUNK_SIZE = 4096
 HTTP_STATUS = {"OK": ResponseStatus(code=200, message="OK"),
                "BAD_REQUEST": ResponseStatus(code=400, message="Bad request"),
@@ -61,14 +55,6 @@ HTTP_STATUS = {"OK": ResponseStatus(code=200, message="OK"),
                "INTERNAL_SERVER_ERROR": ResponseStatus(code=500, message="Internal server error")}
 PROTOCOL = "http"
 ROUTE_INDEX = "/index.html"
-#ROUTE_VOICES = "/voices"
-#ROUTE_READ = "/read"
-
-
-# Create a client using the credentials and region defined in the adminuser
-# section of the AWS credentials and configuration files
-#session = Session(profile_name="adminuser")
-#polly = session.client("polly")
 
 
 class HTTPStatusError(Exception):
@@ -139,7 +125,9 @@ class ChunkedHTTPRequestHandler(BaseHTTPRequestHandler):
 
     def route_index(self, path, query):
         """Handles routing for the application's entry point'"""
+        #Generate fuzzed sample string from template.html
         result = generator.generate_samples('./', ['index.html'])
+        #Convert String to a byte stream
         output = io.BytesIO(bytearray(result, 'utf8'))
         try:
             return ResponseData(status=HTTP_STATUS["OK"], content_type="text/html",
@@ -157,7 +145,10 @@ class ChunkedHTTPRequestHandler(BaseHTTPRequestHandler):
         self.send_response(status.code, status.message)
         self.send_header('Content-type', content_type)
         self.send_header('Transfer-Encoding', 'chunked')
-        self.send_header('Connection', 'close')
+        #close is slowwww on chrome/edge/opera
+        #keep-alive is faster on chrome
+        #ios ui weirdness with close
+        self.send_header('Connection', 'keep-alive')
         self.end_headers()
 
     def stream_data(self, stream):
