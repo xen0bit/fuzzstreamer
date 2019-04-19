@@ -30,6 +30,7 @@ import sys
 import time
 import generator
 import io
+import subprocess
 
 if sys.version_info >= (3, 0):
     from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -55,6 +56,9 @@ HTTP_STATUS = {"OK": ResponseStatus(code=200, message="OK"),
                "INTERNAL_SERVER_ERROR": ResponseStatus(code=500, message="Internal server error")}
 PROTOCOL = "http"
 ROUTE_INDEX = "/index.html"
+
+def doRadamsa():
+    return subprocess.run(['radamsa', './template.html'], stdout=subprocess.PIPE).stdout
 
 
 class HTTPStatusError(Exception):
@@ -127,6 +131,7 @@ class ChunkedHTTPRequestHandler(BaseHTTPRequestHandler):
         """Handles routing for the application's entry point'"""
         #Generate fuzzed sample string from template.html
         result = generator.generate_samples('./', ['index.html'])
+        #print(doRadamsa())
         #Convert String to a byte stream
         output = io.BytesIO(bytearray(result, 'utf8'))
         try:
